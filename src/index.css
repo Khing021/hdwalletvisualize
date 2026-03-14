@@ -200,7 +200,6 @@ header h1 {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--accent-color);
-  text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
@@ -291,7 +290,6 @@ header h1 {
   font-size: 0.8rem;
   color: var(--text-dim);
   margin-bottom: 0.5rem;
-  text-transform: uppercase;
 }
 
 .passphrase-input-container input {
@@ -425,7 +423,6 @@ header h1 {
   font-size: 0.8rem;
   color: var(--text-dim);
   margin-bottom: 0.5rem;
-  text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
@@ -523,6 +520,11 @@ header h1 {
   to {
     opacity: 1;
   }
+}
+
+.error-text {
+  color: #ef4444 !important;
+  font-weight: 500;
 }
 
 /* Progress Bar Styles */

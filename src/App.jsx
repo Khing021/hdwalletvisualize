@@ -63,16 +63,73 @@ function App() {
   ];
 
   const tooltipData = {
-    'entropy': { title: 'Entropy', content: 'คือการสุ่มค่าตัวเลขพื้นฐาน (128/256 bit) เพื่อนำไปเข้ากระบวนการแฮช (SHA256) และแปลงเป็นรหัสคำที่มนุษย์อ่านได้ (Mnemonic) ยิ่ง bit สูง ความปลอดภัยยิ่งมากขึ้นแต่จำนวนคำจะมากขึ้นตาม' },
-    'mnemonic': { title: 'Mnemonic Phrase', content: 'หรือ Seed Phrase คือชุดคำที่ใช้แทนค่า Entropy เพื่อให้มนุษย์สามารถจดจำหรือสำรองข้อมูลได้ง่ายขึ้น โดยใช้คำจากมาตรฐาน BIP39 (2,048 คำ) มาเป็นตัวตัดสิน' },
-    'seed': { title: 'BIP39 Seed', content: 'เกิดจากการนำ Mnemonic และ Passphrase (ถ้ามี) ไปผ่านกระบวนการ PBKDF2 สองพันครั้ง เพื่อสร้าง Buffer 64-byte (512-bit) ที่จะใช้เป็นต้นกำเนิดของกุญแจทั้งหมด' },
-    'masterKey': { title: 'Master Node', content: 'กุญแจหลัก (m) ที่เป็นรากฐานของทุกอย่างใน HD Wallet ตามมาตรฐาน BIP32 จากตรงนี้เราสามารถแตกกิ่งก้าน (Derivation) ออกไปเป็นกี่ล้าน Address ก็ได้' },
-    'purpose': { title: 'Purpose', content: 'ระบุมาตรฐานการ Derivation: 44\' สำหรับ Legacy (1...), 49\' สำหรับ Nested SegWit (3...), 84\' สำหรับ Native SegWit (bc1q...) และ 86\' สำหรับ Taproot (bc1p...)' },
-    'coin': { title: 'Coin Type', content: 'กำหนดชนิดของเหรียญตามมาตรฐาน SLIP-0044 เช่น Bitcoin (0\'), Bitcoin Testnet (1\'), Litecoin (2\'), Ethereum (60\')' },
-    'account': { title: 'Account Index', content: 'เปรียบเหมือนการแยกสมุดบัญชีในธนาคารเดียวกัน ช่วยให้คุณสามารถแยกจัดการเงินก้อนต่างๆ ออกจากกันได้เพื่อความเป็นส่วนตัวหรือการแยกวัตถุประสงค์การใช้' },
-    'chain': { title: 'Chain Index', content: '0 = External Chain (สำหรับรับเงินจากคนอื่น/แจกจ่าย Address), 1 = Internal Chain (สำหรับ Change Address ที่ระบบส่งเงินทอนกลับมาให้ตัวเอง)' },
-    'index': { title: 'Address Index', content: 'ลำดับของ Address ย่อยภายใน Account และ Chain นั้นๆ เริ่มต้นจาก 0 และเพิ่มขึ้นไปได้เรื่อยๆ ทุกครั้งที่มีการใช้งาน Address ใหม่' },
-    'address': { title: 'Final Address / Key', content: 'ผลลัพธ์สุดท้ายที่ได้จากการแปลง Public Key เป็นรูปแบบที่เครือข่ายเข้าใจ พร้อมใช้งานสำหรับการรับเงิน' }
+    // Card Tooltips (Data Objects)
+    'entropy': { 
+      title: 'Entropy', 
+      content: 'คือตัวเลขขนาดใหญ่มาก ๆ ค่าหนึ่งซึ่งจะถูกนำไปคำนวณต่อเป็นชุด key และ address ของเราทั้งหมด<br><br>หากมีคนสองคนที่ใช้ค่า entropy เดียวกัน ก็จะได้ชุด key และ address เดียวกันและสามารถขโมยเงินของกันและกันได้ แต่เนื่องจากมาตรฐานกำหนดให้ใช้ entropy ที่ขนาดใหญ่มาก (128 - 256 bit) ทำให้โอกาสที่คนสองคนจะสุ่มได้ค่า entropy เดียวกันนั้นแทบจะเป็นไปไม่ได้ ราวกับการสุ่มหยิบอะตอมให้ได้อะตอมเดียวกันในจักรวาล หรือเทียบเท่าการถูกหวยรางวัลที่หนึ่งติดต่อกัน 7 - 12 งวดซ้อน<br><br>แม้ตามมาตรฐานจริงแล้ว entropy สามารถที่จะเป็น 128, 160, 192, 224, 256 bit ก็ได้ ซึ่งจะสร้างได้เป็น mnemonic phrase (seed phrase) ขนาด 12, 15, 18, 21, 24 คำตามลำดับ แต่ว่ามาตรฐานที่ใช้กันในวงกว้างมีเพียง 12 และ 24 คำเท่านั้น ซึ่งก็มีความปลอดภัยเพียงพอ<br><br>โดยที่ entropy จะถูกนำไปคำนวณหาตัวเลข checksum เพิ่มเติมอีก 4 bit (สำหรับ 128 bit) หรือ 8 bit (สำหรับ 256 bit) เพื่อนำไปต่อท้าย entropy เดิม เป็นมาตรการป้องกันการจดรหัสสำรองกระเป๋าผิดพลาด' 
+    },
+    'mnemonic': { 
+      title: 'Mnemonic Phrase (BIP39)', 
+      content: 'ชุดคำศัพท์ 12-24 คำที่ใช้แทนค่า Entropy เพื่อความสะดวกในการจดจำและสำรองข้อมูล' 
+    },
+    'seed': { 
+      title: 'BIP39 Seed', 
+      content: 'ข้อมูลดิบขนาด 512 บิตที่เป็นต้นกำเนิดของกุญแจทั้งหมดในกระเป๋า' 
+    },
+    'masterKey': { 
+      title: 'Master Root Key (BIP32)', 
+      content: 'กุญแจหลักที่เป็นรากฐานของการ Derivation ทั้งหมดในกระเป๋าเงิน' 
+    },
+    'purpose': { 
+      title: 'Purpose (BIP44/49/84/86)', 
+      content: 'การกำหนดมาตรฐานประเภทที่อยู่กระเป๋า (เช่น Legacy, Segwit, Taproot)' 
+    },
+    'coin': { 
+      title: 'Coin Type (SLIP-0044)', 
+      content: 'การเลือกชนิดเหรียญตามมาตรฐานสากล (เช่น 0\' สำหรับ Bitcoin)' 
+    },
+    'account': { 
+      title: 'Account Index', 
+      content: 'การแยกบัญชีผู้ใช้ภายในกระเป๋าเดียวกันเพื่อความเป็นส่วนตัว' 
+    },
+    'chain': { 
+      title: 'Chain Index', 
+      content: 'การแยกระหว่าง External (รับเงิน) และ Internal (เงินทอน/Change)' 
+    },
+    'index': { 
+      title: 'Address Index', 
+      content: 'ลำดับที่ของ Address ภายในบัญชีและ Chain นั้นๆ' 
+    },
+
+    // Arrow Tooltips (Mathematical Processes)
+    'proc_entropy_mnemonic': {
+      title: 'Checksum & Encoding',
+      content: 'คำนวณ SHA256 (Checksum) ต่อท้าย Entropy และแบ่งเป็นกลุ่มละ 11 บิตเพื่อเทียบคำใน Wordlist'
+    },
+    'proc_mnemonic_seed': {
+      title: 'PBKDF2 Key Stretching',
+      content: 'นำ Mnemonic + Passphrase มาผ่านกระบวนการ PBKDF2 (HMAC-SHA512) วนซ้ำ 2048 ครั้ง'
+    },
+    'proc_seed_master': {
+      title: 'Master Key Generation',
+      content: 'นำ Seed มาผ่าน HMAC-SHA512 เพื่อสร้าง Root Private Key และ Chain Code'
+    },
+    'proc_hardened_derivation': {
+      title: 'Hardened Derivation (BIP32)',
+      content: 'การสร้างกุญแจลูกโดยใช้ Private Key ของตัวแม่ร่วมกับ Index ทำให้มีความปลอดภัยสูง (ไม่สามารถหาค่ากลับจาก Public Key ได้)'
+    },
+    'proc_normal_derivation': {
+      title: 'Normal Derivation (BIP32)',
+      content: 'การสร้างกุญแจลูกแบบปกติ ซึ่งสามารถคำนวณจาก Extended Public Key ของตัวแม่ได้เลย'
+    },
+    'proc_pubkey_derivation': {
+      title: 'Elliptic Curve Math',
+      content: 'การคำนวณ Public Key จาก Private Key โดยใช้การคูณจุดบนเส้นโค้ง secp256k1'
+    },
+    'proc_address_encoding': {
+      title: 'Address Encoding',
+      content: 'การแปลง Public Key เป็น Hash ตามมาตรฐานที่เลือก (เช่น P2PKH, P2WPKH) และเข้ารหัสเป็น Base58 หรือ Bech32'
+    }
   };
 
   const openTooltip = (key) => setActiveTooltip(tooltipData[key]);
@@ -308,7 +365,7 @@ function App() {
           </div>
 
           {/* Ref 0: Centers Entropy & Mnemonic */}
-          <FlowArrow ref={stepRefs[0]} onTooltipClick={() => openTooltip('entropy')} doubleHead={true} />
+          <FlowArrow ref={stepRefs[0]} onTooltipClick={() => openTooltip('proc_entropy_mnemonic')} doubleHead={true} />
 
           <div className="flow-wrapper">
             <FlowBlock
@@ -327,12 +384,12 @@ function App() {
           </div>
 
           {/* This arrow is skipped in the main navigation steps */}
-          <FlowArrow onTooltipClick={() => openTooltip('mnemonic')} />
+          <FlowArrow onTooltipClick={() => openTooltip('proc_entropy_mnemonic')} />
 
           {/* Stage 2: Seed */}
           <div className="flow-wrapper">
             <FlowBlock
-              title="Seed / Passphrase"
+              title="Passphrase & Seed"
               onTooltipClick={() => openTooltip('seed')}
               isActive={activeCardsByStep[currentStep]?.includes(2)}
               onInactiveClick={() => handleCardClick(2)}
@@ -346,12 +403,12 @@ function App() {
           </div>
 
           {/* Ref 1: Centers Seed & Master Key */}
-          <FlowArrow ref={stepRefs[1]} onTooltipClick={() => openTooltip('seed')} />
+          <FlowArrow ref={stepRefs[1]} onTooltipClick={() => openTooltip('proc_mnemonic_seed')} />
 
           {/* Stage 3: Master Key & Purpose */}
           <div className="flow-wrapper">
             <FlowBlock
-              title="Master Root Key"
+              title="BIP32 Root Key"
               onTooltipClick={() => openTooltip('masterKey')}
               isActive={activeCardsByStep[currentStep]?.includes(3)}
               onInactiveClick={() => handleCardClick(3)}
@@ -361,7 +418,7 @@ function App() {
           </div>
 
           {/* Ref 2: Centers Master Key & Purpose */}
-          <FlowArrow ref={stepRefs[2]} onTooltipClick={() => openTooltip('masterKey')} />
+          <FlowArrow ref={stepRefs[2]} onTooltipClick={() => openTooltip('proc_seed_master')} />
 
           <div className="flow-wrapper purpose-wrapper">
             <FlowBlock
@@ -380,7 +437,7 @@ function App() {
           </div>
 
           {/* Ref 3: Centers Purpose & Coin */}
-          <FlowArrow ref={stepRefs[3]} onTooltipClick={() => openTooltip('purpose')} />
+          <FlowArrow ref={stepRefs[3]} onTooltipClick={() => openTooltip('proc_hardened_derivation')} />
 
           {/* Stage 4: Coin */}
           <div className="flow-wrapper purpose-wrapper">
@@ -401,7 +458,7 @@ function App() {
           </div>
 
           {/* Ref 4: Centers Coin & Account */}
-          <FlowArrow ref={stepRefs[4]} onTooltipClick={() => openTooltip('coin')} />
+          <FlowArrow ref={stepRefs[4]} onTooltipClick={() => openTooltip('proc_hardened_derivation')} />
 
           {/* Stage 5: Account */}
           <div className="flow-wrapper purpose-wrapper">
@@ -423,7 +480,7 @@ function App() {
           </div>
 
           {/* Ref 5: Centers Account & Chain */}
-          <FlowArrow ref={stepRefs[5]} onTooltipClick={() => openTooltip('account')} />
+          <FlowArrow ref={stepRefs[5]} onTooltipClick={() => openTooltip('proc_hardened_derivation')} />
 
           {/* Stage 6: Chain */}
           <div className="flow-wrapper purpose-wrapper">
@@ -446,7 +503,7 @@ function App() {
           </div>
 
           {/* Ref 5-6 connector arrow (Static, no scroll ref here) */}
-          <FlowArrow onTooltipClick={() => openTooltip('chain')} />
+          <FlowArrow onTooltipClick={() => openTooltip('proc_normal_derivation')} />
 
           {/* Stage 7 & 8: Index & Address (Consolidated Triplet View) */}
           <div id="index-address-stage" className="flow-wrapper triplet-wrapper">
@@ -469,6 +526,7 @@ function App() {
                 account={account}
                 chain={chain}
                 masterNode={masterNode}
+                onTooltipClick={openTooltip}
               />
             </FlowBlock>
           </div>
@@ -481,9 +539,10 @@ function App() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeTooltip}>&times;</button>
             <h2 className="modal-title">{activeTooltip.title} Info</h2>
-            <div className="modal-body">
-              {activeTooltip.content}
-            </div>
+            <div 
+              className="modal-body"
+              dangerouslySetInnerHTML={{ __html: activeTooltip.content }}
+            />
           </div>
         </div>
       )}

@@ -35,7 +35,7 @@ const MnemonicStep = ({ mnemonic, onMnemonicChange, entropyBin, checksumBin }) =
         onChange={(e) => onMnemonicChange(e.target.value)}
         rows={10}
         style={{ width: '100%', resize: 'none', boxSizing: 'border-box' }}
-        placeholder="Enter 12 or 24 words..."
+        placeholder="Enter BIP39 mnemonic phrase (12 or 24 words)..."
       />
     </div>
   );

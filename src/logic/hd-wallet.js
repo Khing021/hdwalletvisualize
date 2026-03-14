@@ -5,6 +5,7 @@ import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 
 const bip32 = BIP32Factory(ecc);
+bitcoin.initEccLib(ecc);
 
 /**
  * Utility functions for binary/hex conversion
@@ -79,25 +80,80 @@ export const derivePath = (node, path) => {
   return node.derivePath(path);
 };
 
+const NETWORKS = {
+  "0'": bitcoin.networks.bitcoin,
+  "1'": bitcoin.networks.testnet,
+  "2'": {
+    messagePrefix: '\x19Litecoin Signed Message:\n',
+    bech32: 'ltc',
+    bip32: { public: 0x019da462, private: 0x019d9cfe },
+    pubKeyHash: 0x30,
+    scriptHash: 0x32,
+    wif: 0xb0,
+  },
+  "3'": {
+    messagePrefix: '\x19Dogecoin Signed Message:\n',
+    bip32: { public: 0x02facafd, private: 0x02fac398 },
+    pubKeyHash: 0x1e,
+    scriptHash: 0x16,
+    wif: 0x9e,
+  },
+  "145'": bitcoin.networks.bitcoin, // BCH Legacy
+  "236'": bitcoin.networks.bitcoin, // BSV Legacy
+};
+
+const COMPATIBILITY = {
+  "0'": ["44'", "49'", "84'", "86'"],
+  "1'": ["44'", "49'", "84'", "86'"],
+  "2'": ["44'", "49'", "84'", "86'"],
+  "3'": ["44'"],
+  "145'": ["44'"],
+  "236'": ["44'"],
+};
+
+const COIN_NAMES = {
+  "0'": "Bitcoin",
+  "1'": "Bitcoin Testnet",
+  "2'": "Litecoin",
+  "3'": "Dogecoin",
+  "145'": "Bitcoin Cash",
+  "236'": "BitcoinSV",
+};
+
+const PURPOSE_NAMES = {
+  "44'": "Legacy",
+  "49'": "Nested Segwit",
+  "84'": "Native Segwit",
+  "86'": "Taproot",
+};
+
 /**
- * Generates address from public key based on purpose.
+ * Generates address from public key based on purpose and coin.
  */
-export const getAddress = (publicKey, purpose) => {
-  let network = bitcoin.networks.bitcoin;
-  // Ensure publicKey is a proper Buffer for bitcoinjs-lib compatibility
+export const getAddress = (publicKey, purpose, coin) => {
+  if (!COMPATIBILITY[coin]?.includes(purpose)) {
+    return `ERROR: ${COIN_NAMES[coin] || coin} ไม่รองรับแอดเดรสประเภท ${PURPOSE_NAMES[purpose] || purpose}`;
+  }
+
+  const network = NETWORKS[coin] || bitcoin.networks.bitcoin;
   const pubkey = Buffer.from(publicKey);
 
-  if (purpose === "44'") {
-    return bitcoin.payments.p2pkh({ pubkey, network }).address;
-  } else if (purpose === "49'") {
-    return bitcoin.payments.p2sh({
-      redeem: bitcoin.payments.p2wpkh({ pubkey, network }),
-      network
-    }).address;
-  } else if (purpose === "84'") {
-    return bitcoin.payments.p2wpkh({ pubkey, network }).address;
-  } else if (purpose === "86'") {
-    return bitcoin.payments.p2tr({ internalPubkey: pubkey.slice(1, 33), network }).address;
+  try {
+    if (purpose === "44'") {
+      return bitcoin.payments.p2pkh({ pubkey, network }).address;
+    } else if (purpose === "49'") {
+      return bitcoin.payments.p2sh({
+        redeem: bitcoin.payments.p2wpkh({ pubkey, network }),
+        network
+      }).address;
+    } else if (purpose === "84'") {
+      return bitcoin.payments.p2wpkh({ pubkey, network }).address;
+    } else if (purpose === "86'") {
+      // Taproot uses X-only pubkey (32 bytes)
+      return bitcoin.payments.p2tr({ internalPubkey: pubkey.slice(1, 33), network }).address;
+    }
+  } catch (e) {
+    return `ERROR: ${e.message}`;
   }
   return 'Unknown';
 };

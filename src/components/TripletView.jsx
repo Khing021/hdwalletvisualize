@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { deriveNode, getNodeXprv, getAddress } from '../logic/hd-wallet';
 import { Buffer } from 'buffer';
 
-const TripletView = ({ selectedIndex, onIndexChange, purpose, coin, account, chain, masterNode }) => {
+const TripletView = ({ selectedIndex, onIndexChange, purpose, coin, account, chain, masterNode, onTooltipClick }) => {
   const [indexCount, setIndexCount] = useState(20);
   const skipSmoothScrollRef = useRef(false);
   const containerRef = useRef(null);
@@ -108,7 +108,7 @@ const TripletView = ({ selectedIndex, onIndexChange, purpose, coin, account, cha
               pubKey = Buffer.from(derivedNode.publicKey).toString('hex');
               try {
                 // Pass the original publicKey to getAddress (not Buffer-wrapped)
-                addr = getAddress(derivedNode.publicKey, purpose);
+                addr = getAddress(derivedNode.publicKey, purpose, coin);
               } catch (addrErr) {
                 addr = 'Error: ' + (addrErr.message || 'Unknown');
               }
@@ -132,7 +132,7 @@ const TripletView = ({ selectedIndex, onIndexChange, purpose, coin, account, cha
             </div>
 
             {/* Arrow */}
-            <div className="triplet-arrow">⇒</div>
+            <div className="triplet-arrow" onClick={() => onTooltipClick('proc_pubkey_derivation')}>⇒</div>
 
             {/* Public Key Card */}
             <div className="triplet-card">
@@ -141,12 +141,14 @@ const TripletView = ({ selectedIndex, onIndexChange, purpose, coin, account, cha
             </div>
 
             {/* Arrow */}
-            <div className="triplet-arrow">⇒</div>
+            <div className="triplet-arrow" onClick={() => onTooltipClick('proc_address_encoding')}>⇒</div>
 
             {/* Address Card */}
             <div className="triplet-card triplet-card-address">
               <div className="triplet-card-label">address #{idx.value}</div>
-              <div className="triplet-card-value address-highlight">{addr || '...'}</div>
+              <div className={`triplet-card-value ${addr?.startsWith('ERROR:') ? 'error-text small-text' : 'address-highlight'}`}>
+                {addr || '...'}
+              </div>
             </div>
           </div>
         );
